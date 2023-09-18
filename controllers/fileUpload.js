@@ -33,7 +33,7 @@ function isFileTypeSupported(type, supportedTypes){
 
 async function uploadFileToCloudinary(file, folder){
     const options = {folder}
-    await cloudinary.uploader.upload(file.tempFilePath, options)
+     return await cloudinary.uploader.upload(file.tempFilePath, options)
 }
 
 //image upload handler
@@ -57,19 +57,21 @@ exports.imageUpload = async (req, res) => {
             message: "file format not supported"
           })  
         }
-
+        console.log("uploading to cloud")
         const response = await uploadFileToCloudinary(file, "fileupload")
+        console.log("response", response)
 
         //entry in DB
-        // const fileData = await File.create({
-        //     name,
-        //     tags, 
-        //     email,
-        //     imageUrl
-        // })
+        const fileData = await File.create({
+            name,
+            tags, 
+            email,
+            imageUrl: response.secure_url,
+        })
 
         res.json({
             success: true,
+            imageUrl: response.secure_url,
             message: "image successfully uploaded"
         })
 
