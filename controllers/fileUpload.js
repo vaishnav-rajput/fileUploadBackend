@@ -31,8 +31,11 @@ function isFileTypeSupported(type, supportedTypes){
     return supportedTypes.includes(type)
 }
 
-async function uploadFileToCloudinary(file, folder){
+async function uploadFileToCloudinary(file, folder, quality){
     const options = {folder}
+    if(quality){
+        options.quality = quality 
+    }
     options.resource_type = "auto"  //auto-matically detect which type of variable it is
      return await cloudinary.uploader.upload(file.tempFilePath, options)
 }
@@ -123,6 +126,58 @@ exports.videoUpload = async (req, res) => {
             message: "video successfully uploaded"
         })
     } catch (error) {
-        
+        console.error(error)
+        res.status(400).json({
+            success: false,
+            message: "something went wrong"
+        })  
     }
+}
+
+//imageSizeReducer
+exports.imageSizeReducer = async (req, res) => {
+  try {
+     //data fetch 
+     const {name, tags, email} = req.body
+     console.log(name, tags, email)
+
+     //file fetch
+     const file = req.files.imageFile;
+     console.log("imageUploadFile", file)
+
+     //validation
+     const supportedTypes = ["jpg", "jpeg", "png"]
+     const fileType = file.name.split('.')[1].toLowerCase()
+     
+     if(!isFileTypeSupported(fileType, supportedTypes)){
+       return res.status(400).json({
+         success: false,
+         message: "file format not supported"
+       })  
+     }
+     console.log("uploading to cloud")
+     const response = await uploadFileToCloudinary(file, "fileupload", 10)
+     console.log("response", response)
+
+     //entry in DB
+     const fileData = await File.create({
+         name,
+         tags, 
+         email,
+         imageUrl: response.secure_url,
+     })
+
+     res.json({
+         success: true,
+         imageUrl: response.secure_url,
+         message: "image successfully uploaded"
+     })
+
+  } catch (error) {
+    console.error(error)
+    res.status(400).json({
+        success: false,
+        message: "something went wrong"
+    })  
+  }  
 }
