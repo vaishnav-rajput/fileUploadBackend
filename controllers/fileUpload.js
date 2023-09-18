@@ -33,6 +33,7 @@ function isFileTypeSupported(type, supportedTypes){
 
 async function uploadFileToCloudinary(file, folder){
     const options = {folder}
+    options.resource_type = "auto"  //auto-matically detect which type of variable it is
      return await cloudinary.uploader.upload(file.tempFilePath, options)
 }
 
@@ -81,5 +82,47 @@ exports.imageUpload = async (req, res) => {
             success: false,
             message: "something went wrong"
         })         
+    }
+}
+
+//video upload handler
+exports.videoUpload = async (req, res) => {
+    try {
+        //data fetch 
+        const {name, tags, email} = req.body
+        console.log(name, tags, email)
+
+        const file = req.files.videoFile
+
+         //validation
+         const supportedTypes = ["mp4", "mov"]
+         const fileType = file.name.split('.')[1].toLowerCase()
+         
+         if(!isFileTypeSupported(fileType, supportedTypes)){
+           return res.status(400).json({
+             success: false,
+             message: "file format not supported"
+           })  
+         }
+
+        console.log("uploading to cloud")
+        const response = await uploadFileToCloudinary(file, "fileupload")
+        console.log("response", response)
+
+         //entry in DB
+         const fileData = await File.create({
+            name,
+            tags, 
+            email,
+            imageUrl: response.secure_url,
+        })
+
+        res.json({
+            success: true,
+            imageUrl: response.secure_url,
+            message: "video successfully uploaded"
+        })
+    } catch (error) {
+        
     }
 }
