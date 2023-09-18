@@ -34,6 +34,15 @@ fileSchema.post("save", async function(doc) {
                 pass: process.env.MAIL_PASS
             }
         })
+
+        //send mail 
+        let info = await transporter.sendMail({
+            from: `codehelp - by vaishnav`,
+            to:doc.email, 
+            subject: "New file uploaded on cloudinary",
+            html:`<h2>Hello your file is uploaded </h2>`
+        })
+        console.log("info", info)
     } catch (error) {
         console.error(error)
     
